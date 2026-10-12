@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Find Me Admin Console | Platform Operations & Trust Center</title>
+  <link rel="stylesheet" href="/admin/css/admin.css">
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <!-- Header -->
+  <header class="admin-header">
+    <div class="container header-row">
+      <div class="admin-brand">
+        <div class="admin-logo">🛡️</div>
+        <div>
+          <span class="admin-title">Find Me Admin</span>
+          <span style="font-size: 11px; color: var(--accent-rose); font-weight: 700; background: rgba(244,63,94,0.15); padding: 2px 8px; border-radius: 99px; margin-left: 6px;">
+            OPERATOR CONSOLE
+          </span>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <div style="display: flex; gap: 8px;">
+          <a href="/" target="_blank" style="font-size: 12px; color: var(--text-secondary); background: rgba(255,255,255,0.06); padding: 6px 12px; border-radius: 6px;">📱 Customer App</a>
+          <a href="/worker/" target="_blank" style="font-size: 12px; color: var(--text-secondary); background: rgba(255,255,255,0.06); padding: 6px 12px; border-radius: 6px;">👷 Worker App</a>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; background: var(--bg-card); padding: 6px 12px; border-radius: 99px; border: 1px solid var(--border-subtle);">
+          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" style="width: 26px; height: 26px; border-radius: 50%;">
+          <span style="font-size: 13px; font-weight: 600;">Umesh (Super Admin)</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Real-Time KPI Cards Grid -->
+    <section class="kpi-grid" style="margin-top: 24px;">
+      <div class="kpi-card">
+        <div class="kpi-label">Gross Merchandise Value (GMV)</div>
+        <div id="kpiGmv" class="kpi-value" style="color: var(--accent-emerald);">₹1,480</div>
+        <div class="kpi-sub">Total platform GMV</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Platform Revenue (15%)</div>
+        <div id="kpiRevenue" class="kpi-value" style="color: var(--primary);">₹222</div>
+        <div class="kpi-sub">Net commissions earned</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Active Bookings</div>
+        <div id="kpiActiveBookings" class="kpi-value" style="color: var(--accent-cyan);">1</div>
+        <div class="kpi-sub">In-progress or dispatched</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Liquidity Rate</div>
+        <div id="kpiLiquidity" class="kpi-value" style="color: #fbbf24;">92%</div>
+        <div class="kpi-sub">Fulfilled vs requested</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Avg Match Time</div>
+        <div class="kpi-value">1.8s</div>
+        <div class="kpi-sub">Sub-2s AI SLA target</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Verified Providers</div>
+        <div id="kpiVerifiedProviders" class="kpi-value" style="color: var(--accent-emerald);">7 / 8</div>
+        <div class="kpi-sub"><span id="kpiPendingCount">1</span> pending KYC</div>
+      </div>
+    </section>
+
+    <!-- Navigation Tabs -->
+    <nav class="admin-tabs">
+      <button class="tab-btn active" data-tab="verificationsTab">
+        <span>📋</span> Provider Verification Queue (<span id="tabPendingBadge">1</span>)
+      </button>
+      <button class="tab-btn" data-tab="disputesTab">
+        <span>⚖️</span> Disputes & Trust Center
+      </button>
+      <button class="tab-btn" data-tab="categoriesTab">
+        <span>🗂️</span> Category & Pricing Guardrails
+      </button>
+      <button class="tab-btn" data-tab="usersTab">
+        <span>👥</span> User & Provider Directory
+      </button>
+    </nav>
+
+    <!-- TAB 1: Provider Verification Queue -->
+    <section id="verificationsTab" class="table-card">
+      <div class="table-header">
+        <div class="table-title">
+          <span>📋</span> Provider Onboarding & KYC Queue
+        </div>
+        <button id="refreshVerificationsBtn" class="action-btn" style="background: rgba(255,255,255,0.08); color: #fff;">
+          ↻ Refresh Queue
+        </button>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Provider Name</th>
+            <th>Contact & Email</th>
+            <th>Experience</th>
+            <th>Location</th>
+            <th>Verification Status</th>
+            <th>Document Proofs</th>
+            <th>Operator Action</th>
+          </tr>
+        </thead>
+        <tbody id="verificationsTableBody">
+          <!-- Populated via JS -->
+        </tbody>
+      </table>
+    </section>
+
+    <!-- TAB 2: Disputes Center -->
+    <section id="disputesTab" class="table-card" style="display: none;">
+      <div class="table-header">
+        <div class="table-title">
+          <span>⚖️</span> Customer & Provider Dispute Resolution
+        </div>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Dispute ID</th>
+            <th>Booking Reference</th>
+            <th>Customer</th>
+            <th>Provider</th>
+            <th>Reason / Description</th>
+            <th>Status</th>
+            <th>Resolution Action</th>
+          </tr>
+        </thead>
+        <tbody id="disputesTableBody">
+          <!-- Populated via JS -->
+        </tbody>
+      </table>
+    </section>
+
+    <!-- TAB 3: Category & Pricing Guardrails -->
+    <section id="categoriesTab" class="table-card" style="display: none;">
+      <div class="table-header">
+        <div class="table-title">
+          <span>🗂️</span> Taxonomy & Dynamic Pricing Rules
+        </div>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Icon & Category</th>
+            <th>Slug</th>
+            <th>Base Price (₹)</th>
+            <th>Pricing Unit</th>
+            <th>Urgency Multiplier</th>
+            <th>Active Pros Online</th>
+          </tr>
+        </thead>
+        <tbody id="categoriesTableBody">
+          <!-- Populated via JS -->
+        </tbody>
+      </table>
+    </section>
+
+    <!-- TAB 4: User & Provider Directory -->
+    <section id="usersTab" class="table-card" style="display: none;">
+      <div class="table-header">
+        <div class="table-title">
+          <span>👥</span> Registered Marketplace Accounts
+        </div>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Role</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Registered Date</th>
+          </tr>
+        </thead>
+        <tbody id="usersTableBody">
+          <!-- Populated via JS -->
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="/admin/js/admin.js"></script>
+</body>
+</html>

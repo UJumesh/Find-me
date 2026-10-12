@@ -1,0 +1,13 @@
+{
+  "name": "find-me",
+  "version": "1.0.0",
+  "description": "Find Me - AI-Powered Hyperlocal Service Marketplace (S-Commerce Platform)",
+  "scripts": {
+    "dev": "npm --prefix server run dev",
+    "seed": "npm --prefix server run seed",
+    "build": "npm --prefix server run build",
+    "start": "npm --prefix server run start"
+  },
+  "keywords": ["hyperlocal", "ai-marketplace", "s-commerce", "service-matching"],
+  "author": "Umesh"
+}

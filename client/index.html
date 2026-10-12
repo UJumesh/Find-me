@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Find Me | AI-Powered Hyperlocal Service Marketplace</title>
+  <meta name="description" content="AI-driven hyperlocal concierge connecting you with verified local service professionals in minutes with transparent pricing and live tracking.">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <!-- Toast notification system -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="/" class="brand">
+        <div class="brand-logo">⚡</div>
+        <div>
+          <span class="brand-title">Find Me</span>
+          <span class="brand-badge">AI S-Commerce</span>
+        </div>
+      </a>
+
+      <div class="nav-links">
+        <div class="portal-pills">
+          <a href="/worker/" target="_blank" class="portal-pill worker">
+            <span>👷</span> Worker App
+          </a>
+          <a href="/admin/" target="_blank" class="portal-pill admin">
+            <span>🛡️</span> Admin Console
+          </a>
+        </div>
+
+        <div class="user-switcher" id="userSwitcherBtn" title="Click to switch demo user">
+          <img id="navUserAvatar" class="user-avatar" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150" alt="User Avatar">
+          <span id="navUserName" class="user-name">Urgent Uma</span>
+          <span style="font-size: 10px; color: var(--text-muted);">▼</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="container">
+    <!-- Active Booking Sticky Bar (Appears when user has an ongoing booking) -->
+    <section id="activeBookingBar" class="active-tracker-bar" style="display: none;">
+      <div class="tracker-info">
+        <div class="tracker-pulse"></div>
+        <div class="tracker-text">
+          <h4><span id="trackerCategoryIcon">🔧</span> <span id="trackerCategoryName">Plumbing</span> • <span id="trackerStatusBadge" class="urgency-badge URGENT">ACCEPTED</span></h4>
+          <p id="trackerSubtitle">Assigned Provider: <strong>Suresh Kumar</strong> is preparing your visit</p>
+        </div>
+      </div>
+      <div class="tracker-actions">
+        <button id="openChatBtn" class="tracker-btn secondary">💬 Message Provider</button>
+        <button id="openTrackingModalBtn" class="tracker-btn primary">📍 Live Tracking</button>
+      </div>
+    </section>
+
+    <!-- Hero AI Concierge Section -->
+    <section class="hero">
+      <div class="hero-tag">
+        <span>✨ Next-Gen AI Concierge</span> • <span>No Endless Searching</span>
+      </div>
+      <h1 class="hero-title">
+        Tell Find Me what you need.<br>
+        <span class="highlight">We understand, match & handle it.</span>
+      </h1>
+      <p class="hero-subtitle">
+        Describe your household issue or service request in natural language. Our AI engine classifies intent, estimates prices, and matches verified professionals nearby instantly.
+      </p>
+
+      <!-- AI Natural Language Prompt Box -->
+      <div class="ai-prompt-container">
+        <form id="aiPromptForm" class="ai-prompt-box">
+          <span class="ai-sparkle-icon">🪄</span>
+          <input 
+            type="text" 
+            id="promptInput" 
+            class="ai-prompt-input" 
+            placeholder="e.g., 'Water leaking heavily under bathroom sink, need someone right now in Indiranagar'" 
+            autocomplete="off" 
+            required
+          />
+          <div class="prompt-actions">
+            <button type="button" id="voiceBtn" class="voice-btn" title="Simulate Voice Input">
+              🎙️
+            </button>
+            <button type="submit" id="submitPromptBtn" class="match-btn">
+              <span>Find Providers</span> ⚡
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Quick sample prompts -->
+      <div class="prompt-chips">
+        <span style="font-size: 12px; color: var(--text-muted); align-self: center; margin-right: 4px;">Try asking:</span>
+        <button class="prompt-chip" data-prompt="AC not cooling at all, leaking water from indoor unit, urgent">❄️ AC leaking & not cooling</button>
+        <button class="prompt-chip" data-prompt="Kitchen main pipe burst under sink, flooding floor, need plumber asap">🔧 Burst pipe under sink</button>
+        <button class="prompt-chip" data-prompt="Power tripping repeatedly whenever geyser turns on in bathroom">⚡ Power tripping short circuit</button>
+        <button class="prompt-chip" data-prompt="Need deep cleaning for 3BHK flat including sofa and kitchen this weekend">✨ Full home deep cleaning</button>
+        <button class="prompt-chip" data-prompt="Washing machine drum making loud noise and not spinning">📺 Washing machine repair</button>
+      </div>
+    </section>
+
+    <!-- AI Intent Understanding Output & Clarification Dialogue -->
+    <section id="intentResultSection" style="display: none;">
+      <div class="ai-intent-card">
+        <div class="intent-header">
+          <div class="intent-title">
+            <span>🧠 AI Intent Classification</span>
+            <span id="intentCategoryBadge" class="brand-badge" style="font-size: 13px; padding: 4px 10px;">Plumbing</span>
+            <span id="intentConfidenceBadge" class="confidence-pill">95% Match Confidence</span>
+          </div>
+          <div id="intentUrgencyBadge" class="urgency-badge URGENT">URGENT PRIORITY</div>
+        </div>
+
+        <div class="intent-grid">
+          <div class="intent-stat">
+            <label>Detected Category</label>
+            <span id="intentCategoryName">Plumbing & Water Leakage</span>
+          </div>
+          <div class="intent-stat">
+            <label>Estimated Cost Range</label>
+            <span id="intentPriceRange">₹350 - ₹500 (per visit)</span>
+          </div>
+          <div class="intent-stat">
+            <label>Urgency Factor</label>
+            <span id="intentUrgencyReason">Emergency indicators detected</span>
+          </div>
+          <div class="intent-stat">
+            <label>Matching Strategy</label>
+            <span id="intentStrategy">Proximity + Verified + Fast SLA</span>
+          </div>
+        </div>
+
+        <!-- Clarification Box (if AI needs more info) -->
+        <div id="clarificationBox" class="clarification-box" style="display: none;">
+          <div class="clarification-title">
+            <span>💡 Clarification Question</span>
+          </div>
+          <p id="clarificationQuestionText" style="font-size: 13.5px; color: #e2e8f0; margin-bottom: 8px;">
+            Could you specify what type of fixture is leaking?
+          </p>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="clarificationInput" class="clarification-input" placeholder="Type your answer (e.g. 'Under the kitchen sink')">
+            <button id="submitClarificationBtn" class="match-btn" style="padding: 0 16px; margin-top: 6px; font-size: 13px;">Refine</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Provider Matching Results Section -->
+    <section id="providerResultsSection">
+      <div class="section-header">
+        <h2 class="section-title">
+          <span>⚡ Matched Service Professionals</span>
+          <span id="matchCountBadge" style="font-size: 14px; font-weight: 600; color: var(--text-muted);">(Showing Top Ranked)</span>
+        </h2>
+        <div style="font-size: 13px; color: var(--text-secondary);">
+          Sorted by: <strong style="color: var(--accent-cyan);">Multi-Factor AI Ranking</strong>
+        </div>
+      </div>
+
+      <div id="providersGrid" class="provider-grid">
+        <!-- Provider Cards populated dynamically via JS -->
+      </div>
+    </section>
+
+    <!-- Service Categories Directory -->
+    <section id="categoriesSection">
+      <div class="section-header">
+        <h2 class="section-title">
+          <span>🗂️ Explore All Service Categories</span>
+        </h2>
+      </div>
+
+      <div id="categoriesGrid" class="category-grid">
+        <!-- Categories populated dynamically via JS -->
+      </div>
+    </section>
+  </main>
+
+  <!-- MODAL: Booking Confirmation & Customization -->
+  <div id="bookingModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="bookingModalTitle">Confirm Service Booking</h3>
+        <button id="closeBookingModal" class="close-modal-btn">✕</button>
+      </div>
+
+      <form id="bookingForm">
+        <input type="hidden" id="modalProviderId">
+        <input type="hidden" id="modalCategoryId">
+
+        <div class="form-group">
+          <label>Selected Provider</label>
+          <div id="modalProviderSummary" style="display: flex; align-items: center; gap: 12px; background: rgba(0,0,0,0.25); padding: 12px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+            <img id="modalProviderImg" src="" style="width: 44px; height: 44px; border-radius: 8px; object-fit: cover;">
+            <div>
+              <h4 id="modalProviderName" style="font-size: 15px;">Suresh Kumar</h4>
+              <p id="modalProviderMeta" style="font-size: 12px; color: var(--text-secondary);">⭐ 4.9 • 8 yrs exp • Verified Master Pro</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Service Requirement / Note</label>
+          <textarea id="modalRequirement" class="form-textarea" rows="2" required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Service Address / Neighborhood</label>
+          <input type="text" id="modalAddress" class="form-input" value="12th Main, Indiranagar, Bengaluru" required>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label>Urgency Mode</label>
+            <select id="modalUrgency" class="form-select">
+              <option value="URGENT">⚡ Emergency (Immediate Dispatch)</option>
+              <option value="MEDIUM" selected>🕒 Standard (Today)</option>
+              <option value="LOW">📅 Flexible / Planned</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Preferred Time</label>
+            <select id="modalSchedule" class="form-select">
+              <option value="now">Immediate (Within 30m)</option>
+              <option value="morning">Morning (9 AM - 12 PM)</option>
+              <option value="afternoon">Afternoon (1 PM - 4 PM)</option>
+              <option value="evening">Evening (5 PM - 8 PM)</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: var(--radius-md); padding: 14px; margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px;">
+            <span>Estimated Service Rate:</span>
+            <span id="modalEstPrice" style="font-weight: 700;">₹450</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted);">
+            <span>Platform Escrow Protection:</span>
+            <span style="color: var(--accent-emerald);">Included ✓</span>
+          </div>
+        </div>
+
+        <button type="submit" class="match-btn" style="width: 100%; justify-content: center; font-size: 16px;">
+          <span>Confirm & Send Booking Request</span> 🚀
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Live Booking Tracking & Lifecycle Progress -->
+  <div id="trackingModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 650px;">
+      <div class="modal-header">
+        <div>
+          <h3>Live Booking Lifecycle & Tracking</h3>
+          <p id="trackingModalId" style="font-size: 12px; color: var(--text-muted);">Booking #BK-0000</p>
+        </div>
+        <button id="closeTrackingModal" class="close-modal-btn">✕</button>
+      </div>
+
+      <!-- Lifecycle Progress Stepper -->
+      <div style="margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; position: relative; margin-bottom: 12px;">
+          <div style="position: absolute; top: 14px; left: 20px; right: 20px; height: 3px; background: rgba(255,255,255,0.1); z-index: 1;"></div>
+          <div id="progressLine" style="position: absolute; top: 14px; left: 20px; width: 25%; height: 3px; background: var(--primary-gradient); z-index: 2; transition: width 0.5s ease;"></div>
+          
+          <div class="step-node active" id="stepNodeRequested" style="z-index: 3; text-align: center;">
+            <div style="width: 30px; height: 30px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; margin: 0 auto 6px;">1</div>
+            <span style="font-size: 11px; color: var(--text-secondary);">Requested</span>
+          </div>
+          <div class="step-node" id="stepNodeAccepted" style="z-index: 3; text-align: center;">
+            <div style="width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; margin: 0 auto 6px;">2</div>
+            <span style="font-size: 11px; color: var(--text-secondary);">Accepted</span>
+          </div>
+          <div class="step-node" id="stepNodeEnRoute" style="z-index: 3; text-align: center;">
+            <div style="width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; margin: 0 auto 6px;">3</div>
+            <span style="font-size: 11px; color: var(--text-secondary);">En Route</span>
+          </div>
+          <div class="step-node" id="stepNodeInProgress" style="z-index: 3; text-align: center;">
+            <div style="width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; margin: 0 auto 6px;">4</div>
+            <span style="font-size: 11px; color: var(--text-secondary);">In Progress</span>
+          </div>
+          <div class="step-node" id="stepNodeCompleted" style="z-index: 3; text-align: center;">
+            <div style="width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; margin: 0 auto 6px;">5</div>
+            <span style="font-size: 11px; color: var(--text-secondary);">Completed</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live GPS / Route Map Canvas Mockup -->
+      <div style="background: #0f172a; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); height: 180px; position: relative; overflow: hidden; margin-bottom: 20px; display: flex; align-items: center; justify-content: center;">
+        <div style="position: absolute; inset: 0; background: radial-gradient(#334155 1px, transparent 1px); background-size: 16px 16px; opacity: 0.5;"></div>
+        <div style="position: absolute; width: 65%; height: 2px; background: dashed #6366f1;"></div>
+        <!-- Customer Pin -->
+        <div style="position: absolute; right: 20%; display: flex; flex-direction: column; align-items: center;">
+          <span style="font-size: 22px;">📍</span>
+          <span style="font-size: 10px; font-weight: 700; background: rgba(0,0,0,0.7); padding: 2px 6px; border-radius: 4px;">You (Indiranagar)</span>
+        </div>
+        <!-- Provider Moving Pin -->
+        <div id="liveProviderPin" style="position: absolute; left: 25%; display: flex; flex-direction: column; align-items: center; transition: left 1s ease;">
+          <span style="font-size: 24px; animation: bounce 1.5s infinite alternate;">🛵</span>
+          <span id="liveProviderPinName" style="font-size: 10px; font-weight: 700; background: #6366f1; color: #fff; padding: 2px 6px; border-radius: 4px;">Suresh (12 min)</span>
+        </div>
+      </div>
+
+      <!-- Assigned Provider Card inside tracking -->
+      <div id="trackingProviderDetails" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <img id="trackingProviderAvatar" src="" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+          <div>
+            <h4 id="trackingProviderName" style="font-size: 16px;">Suresh Kumar</h4>
+            <p id="trackingProviderPhone" style="font-size: 13px; color: var(--text-secondary);">📞 Masked Contact: +91 98450-XXXXX</p>
+          </div>
+        </div>
+        <button id="trackingChatBtn" class="tracker-btn secondary">💬 In-App Chat</button>
+      </div>
+
+      <!-- Action Buttons (Pay / Review / Cancel) -->
+      <div id="trackingActionsRow" style="display: flex; gap: 10px; justify-content: flex-end;">
+        <button id="cancelBookingBtn" class="tracker-btn secondary" style="color: var(--accent-rose);">Cancel Request</button>
+        <button id="payNowBtn" class="tracker-btn primary" style="display: none; background: var(--accent-emerald);">💳 Pay Bill & Receipt</button>
+        <button id="reviewNowBtn" class="tracker-btn primary" style="display: none;">⭐ Rate & Review</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Real-Time Chat Drawer -->
+  <div id="chatDrawer" class="chat-drawer">
+    <div class="chat-header">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="width: 10px; height: 10px; border-radius: 50%; background: var(--accent-emerald);"></div>
+        <h4 id="chatHeaderName" style="font-size: 14px;">Suresh Kumar</h4>
+      </div>
+      <button id="closeChatBtn" style="background: transparent; color: var(--text-muted); font-size: 16px;">✕</button>
+    </div>
+
+    <div id="chatMessages" class="chat-messages">
+      <!-- Chat bubbles injected via JS -->
+    </div>
+
+    <form id="chatForm" class="chat-input-row">
+      <input type="text" id="chatInput" class="chat-input" placeholder="Type a message..." autocomplete="off">
+      <button type="submit" class="chat-send-btn">Send</button>
+    </form>
+  </div>
+
+  <!-- MODAL: Payment Checkout & Receipt -->
+  <div id="paymentModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3>Digital Receipt & Checkout</h3>
+        <button id="closePaymentModal" class="close-modal-btn">✕</button>
+      </div>
+
+      <div style="background: rgba(0,0,0,0.3); border-radius: var(--radius-md); padding: 20px; margin-bottom: 20px; border: 1px dashed var(--border-subtle);">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px;">
+          <span style="color: var(--text-secondary);">Service Charge</span>
+          <span id="receiptServiceAmount" style="font-weight: 700;">₹450</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; color: var(--text-muted);">
+          <span>Platform Safety Fee (15%)</span>
+          <span>Included</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; color: var(--text-muted);">
+          <span>GST / Taxes</span>
+          <span>₹0 (Waived)</span>
+        </div>
+        <hr style="border: none; border-top: 1px solid var(--border-subtle); margin: 12px 0;">
+        <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: 800;">
+          <span>Total Amount</span>
+          <span id="receiptTotalAmount" style="color: var(--accent-emerald);">₹450</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Select Payment Method</label>
+        <select id="paymentMethodSelect" class="form-select">
+          <option value="UPI">⚡ UPI (Google Pay / PhonePe / Paytm)</option>
+          <option value="CARD">💳 Credit / Debit Card</option>
+          <option value="CASH">💵 Cash on Completion</option>
+        </select>
+      </div>
+
+      <button id="confirmPaymentBtn" class="match-btn" style="width: 100%; justify-content: center;">
+        <span>Pay Securely (Escrow Protected)</span> ✓
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL: Star Rating & Review -->
+  <div id="reviewModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 480px; text-align: center;">
+      <div class="modal-header">
+        <h3 style="width: 100%;">Rate Your Experience</h3>
+        <button id="closeReviewModal" class="close-modal-btn">✕</button>
+      </div>
+
+      <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 18px;">
+        How was the service provided by <strong id="reviewProviderName">Suresh Kumar</strong>?
+      </p>
+
+      <!-- Star Selector -->
+      <div id="starSelector" style="font-size: 36px; cursor: pointer; margin-bottom: 20px; display: flex; justify-content: center; gap: 8px;">
+        <span class="star" data-rating="1">⭐</span>
+        <span class="star" data-rating="2">⭐</span>
+        <span class="star" data-rating="3">⭐</span>
+        <span class="star" data-rating="4">⭐</span>
+        <span class="star" data-rating="5">⭐</span>
+      </div>
+
+      <div class="form-group">
+        <textarea id="reviewComment" class="form-textarea" rows="3" placeholder="Share specific feedback (punctuality, skill, cleanliness)..."></textarea>
+      </div>
+
+      <button id="submitReviewBtn" class="match-btn" style="width: 100%; justify-content: center;">
+        Submit Review & Trust Score
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL: Switch Demo User -->
+  <div id="userModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3>Switch Demo User</h3>
+        <button id="closeUserModal" class="close-modal-btn">✕</button>
+      </div>
+      <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+        Select an active persona to test different booking journeys:
+      </p>
+      <div id="demoUserList" style="display: flex; flex-direction: column; gap: 10px;">
+        <!-- Users populated dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Logic -->
+  <script src="/js/app.js"></script>
+</body>
+</html>

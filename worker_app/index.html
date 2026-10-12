@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Find Me Provider Portal | Service Professional Command Center</title>
+  <link rel="stylesheet" href="/worker/css/worker.css">
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <!-- Toast Notification System -->
+  <div id="toastContainer" style="position: fixed; top: 20px; right: 20px; z-index: 999; display: flex; flex-direction: column; gap: 8px;"></div>
+
+  <!-- Header -->
+  <header class="worker-navbar">
+    <div class="container nav-row">
+      <div class="brand-section">
+        <div class="brand-icon">👷</div>
+        <div>
+          <span class="brand-name">Find Me <span style="font-size: 12px; color: var(--accent-emerald); font-weight: 700; background: rgba(16,185,129,0.15); padding: 2px 8px; border-radius: 99px;">PRO</span></span>
+          <p style="font-size: 11px; color: var(--text-muted);">Provider Operations Console</p>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <!-- Online/Offline Availability Toggle -->
+        <div id="availabilityToggle" class="availability-pill" title="Click to toggle Online/Offline">
+          <div id="statusDot" class="status-dot"></div>
+          <span id="statusText" class="status-text">ONLINE (Accepting Leads)</span>
+        </div>
+
+        <!-- Provider Switcher -->
+        <div id="providerPickerBtn" class="provider-picker">
+          <img id="headerProviderAvatar" class="provider-img" src="https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150" alt="Provider">
+          <div>
+            <h4 id="headerProviderName" style="font-size: 13px; font-weight: 700;">Suresh Kumar</h4>
+            <p id="headerProviderCategory" style="font-size: 11px; color: var(--accent-cyan);">Master Plumber • 4.9⭐</p>
+          </div>
+          <span style="font-size: 10px; color: var(--text-muted); margin-left: 4px;">▼</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Top Stats Row -->
+    <section class="stats-grid" style="margin-top: 24px;">
+      <div class="stat-box">
+        <label>Today's Net Earnings</label>
+        <div id="statEarnings" class="val" style="color: var(--accent-emerald);">₹1,850</div>
+        <div class="sub">15% platform fee deducted</div>
+      </div>
+      <div class="stat-box">
+        <label>Jobs Completed</label>
+        <div id="statJobsCompleted" class="val">4</div>
+        <div class="sub">100% SLA fulfillment</div>
+      </div>
+      <div class="stat-box">
+        <label>Trust & Rating</label>
+        <div id="statRating" class="val" style="color: #fbbf24;">4.9 ⭐</div>
+        <div id="statReviewsCount" class="sub">142 verified reviews</div>
+      </div>
+      <div class="stat-box">
+        <label>Acceptance Rate</label>
+        <div class="val" style="color: var(--accent-cyan);">96%</div>
+        <div class="sub">Avg response: 18 seconds</div>
+      </div>
+    </section>
+
+    <div class="dashboard-grid">
+      <!-- Left Column: Active Job & Queue -->
+      <section>
+        <!-- Active Ongoing Job Console -->
+        <div id="activeJobSection" class="active-job-box" style="display: none;">
+          <div class="job-header">
+            <div>
+              <span id="activeJobUrgency" style="font-size: 11px; font-weight: 800; background: rgba(244,63,94,0.2); color: #fda4af; padding: 4px 10px; border-radius: 99px; border: 1px solid rgba(244,63,94,0.4);">
+                URGENT EMERGENCY
+              </span>
+              <h3 id="activeJobTitle" style="font-size: 20px; font-weight: 700; margin-top: 8px;">
+                Emergency burst pipe leaking under bathroom sink
+              </h3>
+              <p id="activeJobCustomer" style="font-size: 14px; color: #cbd5e1; margin-top: 4px;">
+                Customer: <strong>Urgent Uma</strong> • 📞 <span>+91 9811223344</span>
+              </p>
+            </div>
+            <div style="text-align: right;">
+              <span style="font-size: 12px; color: var(--text-muted); display: block;">Service Payout:</span>
+              <span id="activeJobPrice" style="font-size: 22px; font-weight: 800; color: var(--accent-emerald);">₹450</span>
+            </div>
+          </div>
+
+          <div style="background: rgba(0,0,0,0.3); padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); margin-bottom: 16px;">
+            <p id="activeJobAddress" style="font-size: 13.5px; color: #e2e8f0;">
+              📍 <strong>Location:</strong> 12th Main, Indiranagar, Bengaluru
+            </p>
+            <p id="activeJobStatusText" style="font-size: 13px; color: var(--accent-cyan); margin-top: 4px;">
+              Current Status: <strong>ACCEPTED</strong> (Awaiting Dispatch)
+            </p>
+          </div>
+
+          <!-- Step Progression Controls -->
+          <div class="job-step-buttons">
+            <button id="stepEnRouteBtn" class="btn btn-indigo">
+              🛵 Start Route (En Route)
+            </button>
+            <button id="stepInProgressBtn" class="btn btn-outline" style="display: none;">
+              🛠️ Arrived & Start Work (In Progress)
+            </button>
+            <button id="stepCompleteBtn" class="btn btn-emerald" style="display: none;">
+              ✅ Mark Completed & Request Payment
+            </button>
+            <button id="providerChatBtn" class="btn btn-outline">
+              💬 Chat with Customer
+            </button>
+          </div>
+        </div>
+
+        <!-- No Active Job Fallback -->
+        <div id="noJobPlaceholder" class="dash-card" style="text-align: center; padding: 48px 24px;">
+          <span style="font-size: 40px; display: block; margin-bottom: 12px;">📡</span>
+          <h3 style="font-size: 18px; margin-bottom: 6px;">Standing by for Incoming Leads</h3>
+          <p style="font-size: 14px; color: var(--text-secondary); max-width: 480px; margin: 0 auto 16px;">
+            Your status is Online. New matched customer requests within your service radius will trigger an instant lead alert with a countdown timer.
+          </p>
+          <button id="simulateLeadBtn" class="btn btn-outline" style="font-size: 13px;">
+            ⚡ Trigger Demo Lead Simulation
+          </button>
+        </div>
+
+        <!-- Job History / Queue -->
+        <div class="dash-card">
+          <div class="card-title">
+            <span>📋 Recent Completed Jobs</span>
+            <span style="font-size: 13px; font-weight: 400; color: var(--text-muted);">Verified Payouts</span>
+          </div>
+          <div id="providerJobHistoryList">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Earnings & Ledger, Profile Settings -->
+      <section>
+        <!-- Earnings Ledger -->
+        <div class="dash-card">
+          <div class="card-title">
+            <span>💰 Earnings & Payout Ledger</span>
+          </div>
+
+          <div style="background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.25); border-radius: var(--radius-md); padding: 18px; margin-bottom: 16px;">
+            <span style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase; font-weight: 600;">Available Balance</span>
+            <div id="ledgerBalance" style="font-size: 28px; font-weight: 800; color: #fff; margin: 4px 0 12px;">₹1,570</div>
+            <button id="requestPayoutBtn" class="btn btn-emerald" style="width: 100%; justify-content: center;">
+              Request Instant UPI Payout ⚡
+            </button>
+          </div>
+
+          <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+              <span>Payout Schedule:</span>
+              <strong style="color: #fff;">Daily (T+0 / T+1)</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+              <span>Platform Take Rate:</span>
+              <strong style="color: #fff;">15% flat</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span>UPI ID Linked:</span>
+              <strong style="color: var(--accent-cyan);">suresh@okhdfcbank</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Verification & Profile Card -->
+        <div class="dash-card">
+          <div class="card-title">
+            <span>🛡️ Provider Verification</span>
+            <span id="verificationBadge" style="font-size: 11px; font-weight: 700; background: rgba(16,185,129,0.2); color: var(--accent-emerald); padding: 3px 8px; border-radius: 99px;">VERIFIED</span>
+          </div>
+          <p id="providerBioText" style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 14px;">
+            Certified Master Plumber with 8+ years experience in rapid leak detection, sanitary piping, and bathroom fixtures.
+          </p>
+          <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12.5px; color: var(--text-muted);">
+            <div>✓ Government ID Verification (Approved)</div>
+            <div>✓ Trade Skill Certificate (Validated)</div>
+            <div>✓ Background Check Tier 1 (Cleared)</div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- MODAL: Incoming Lead Alert with SLA Countdown Timer -->
+  <div id="incomingLeadModal" class="lead-modal-overlay">
+    <div class="lead-modal-card">
+      <div id="slaTimerCircle" class="sla-timer-circle">
+        <span id="slaCountdownNum">90</span>s
+      </div>
+
+      <span style="font-size: 12px; font-weight: 800; background: rgba(244,63,94,0.2); color: #fda4af; padding: 4px 12px; border-radius: 99px; text-transform: uppercase;">
+        ⚡ New Match Offer (Priority SLA)
+      </span>
+
+      <h2 id="leadModalTitle" style="font-size: 20px; font-weight: 800; margin: 16px 0 8px;">
+        Emergency burst pipe leaking under bathroom sink
+      </h2>
+      <p id="leadModalAddress" style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px;">
+        📍 12th Main, Indiranagar, Bengaluru • <strong>2.1 km away</strong>
+      </p>
+
+      <div style="background: rgba(255,255,255,0.05); border-radius: var(--radius-md); padding: 14px; margin-bottom: 24px; display: flex; justify-content: space-around;">
+        <div>
+          <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Est. Earnings</span>
+          <div id="leadModalEarnings" style="font-size: 20px; font-weight: 800; color: var(--accent-emerald);">₹382</div>
+        </div>
+        <div style="border-left: 1px solid var(--border-subtle);"></div>
+        <div>
+          <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Customer</span>
+          <div id="leadModalCustomer" style="font-size: 16px; font-weight: 700;">Urgent Uma</div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 12px;">
+        <button id="declineLeadBtn" class="btn btn-outline" style="flex: 1; justify-content: center; color: var(--accent-rose);">
+          Decline / Pass
+        </button>
+        <button id="acceptLeadBtn" class="btn btn-emerald" style="flex: 2; justify-content: center; font-size: 16px;">
+          Accept Booking Now ⚡
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Provider Switcher -->
+  <div id="providerListModal" class="lead-modal-overlay">
+    <div class="lead-modal-card" style="max-width: 480px; text-align: left;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 18px;">Switch Provider Persona</h3>
+        <button id="closeProviderListModal" style="background: transparent; color: #fff; font-size: 18px; border: none; cursor: pointer;">✕</button>
+      </div>
+      <div id="providerPersonaList" style="display: flex; flex-direction: column; gap: 10px;">
+        <!-- Populated via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Real-time chat script & app logic -->
+  <script src="/worker/js/worker.js"></script>
+</body>
+</html>
