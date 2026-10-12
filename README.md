@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # ⚡ Find Me: AI-Powered Hyperlocal Service Marketplace (S-Commerce)
 
 > **Vision:** *The intelligent concierge for everyday local services — customers say what they need in plain natural language, and Find Me handles discovery, intent classification, multi-factor provider matching, booking, real-time tracking, and follow-through end to end.*
@@ -130,3 +131,7 @@ The unified backend will start on **`http://localhost:3000`** and automatically 
 3. **Execute & Track:** Provider clicks *"Start Route"* -> Customer sees provider icon moving on the live map and status change to `EN_ROUTE`. Provider clicks *"Arrived"* -> *"Complete Job"*.
 4. **Pay & Review:** Customer opens digital receipt, simulates escrow checkout, and leaves a 5-star review.
 5. **Admin Oversight:** Open `http://localhost:3000/admin/` to see updated GMV, provider utilization, and verify pending onboarding requests.
+=======
+# Find-me
+S-commerce platform for local services, connecting customers with verified professionals through smart booking and real-time tracking.
+>>>>>>> origin/main
